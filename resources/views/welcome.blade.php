@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
@@ -8,7 +9,13 @@
 </head>
 <body>
     <div id="app">
-        <example-component></example-component>
+        <nav>
+            <ul>
+                <li><router-link to="/login">Login</router-link></li>
+                <li><router-link to="/register">Register</router-link></li>
+            </ul>
+        </nav>
+        <router-view></router-view>
     </div>
 </body>
 </html>
