@@ -3,29 +3,36 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Notifications\LoginNeedsVerification;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use Pnlinh\InfobipSms\Facades\InfobipSms;
+use App\Notifications\LoginNeedsVerification;
 
 class LoginController extends Controller
 {
     public function submit(Request $request)
     {
-        // validate the phone number
+
+        $verificationCode = rand(100000, 999999);
         $request->validate([
             'phone' => 'required|numeric|min:10'
         ]);
 
-        // find or create a user model
+
+        // Find or create a user model
         $user = User::firstOrCreate([
-            'phone' => $request->phone
+            'name' => $request->name,
+            'phone' => $request->phone,
         ]);
 
         if (!$user) {
             return response()->json(['message' => 'Could not process a user with that phone number.'], 401);
         }
-
+        $user->login_code = $verificationCode;
+        $user->save();
         // send the user a one-time use code
-        $user->notify(new LoginNeedsVerification());
+        // InfobipSms::send($request->phone, $verificationCode);
+        $user->notify(new LoginNeedsVerification($verificationCode));
 
         // return back a response
         return response()->json(['message' => 'Text message notification sent.']);
@@ -33,6 +40,7 @@ class LoginController extends Controller
 
     public function verify(Request $request)
     {
+        
         // validate the incoming request
         $request->validate([
             'phone' => 'required|numeric|min:10',
