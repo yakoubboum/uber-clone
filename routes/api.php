@@ -9,6 +9,13 @@ use App\Http\Controllers\DriverController;
 
 Route::post('/login', [LoginController::class, 'submit']);
 Route::post('/login/verify', [LoginController::class, 'verify']);
+Route::post('/test', function(Request $request) {
+    $request->validate([
+        'phone' => 'required',
+       
+    ]);
+    return $request;
+});
 
 Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('/driver', [DriverController::class, 'show']);

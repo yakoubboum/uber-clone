@@ -11,10 +11,10 @@ Route::get('/', function () {
 
 
 
-Route::get('/app/{any}', function () {
+Route::get('/{any}', function () {
     return view('welcome');
 });
 
-Auth::routes();
+// Auth::routes();
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');

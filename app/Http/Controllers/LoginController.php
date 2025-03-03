@@ -15,7 +15,8 @@ class LoginController extends Controller
 
         $verificationCode = rand(100000, 999999);
         $request->validate([
-            'phone' => 'required|numeric|min:10'
+            'phone' => 'required|numeric|min:10',
+            'name' => 'required'
         ]);
 
 
@@ -40,7 +41,7 @@ class LoginController extends Controller
 
     public function verify(Request $request)
     {
-        
+
         // validate the incoming request
         $request->validate([
             'phone' => 'required|numeric|min:10',

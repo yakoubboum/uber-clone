@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import ExampleComponent from "./components/ExampleComponent.vue";
 import LoginComponent from "./pages/auth/Login.vue";
 import RegisterComponent from "./pages/auth/Signup.vue";
+import LandingPage from "./pages/landing.vue";
 
 const routes = [
     {
@@ -10,7 +11,7 @@ const routes = [
         component: ExampleComponent,
     },
     {
-        path: "/login",
+        path: "/",
         name: "login",
         component: LoginComponent,
     },
@@ -19,12 +20,47 @@ const routes = [
         name: "register",
         component: RegisterComponent,
     },
+    {
+        path: "/Landing",
+        name: "landing",
+        component: LandingPage,
+    },
     // Add more routes here
 ];
 
 const router = createRouter({
-    history: createWebHistory("/app"),
+    history: createWebHistory("/"),
     routes,
 });
+
+router.beforeEach((to, from) => {
+    if (to.name === "login") {
+        return true;
+    }
+
+    if (!localStorage.getItem("token")) {
+        return {
+            name: "login",
+        };
+    }
+
+    checkTokenAuthenticity();
+});
+
+const checkTokenAuthenticity = () => {
+    axios
+        .get("http://127.0.0.1:8000/api/user", {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+        })
+        .then((response) => {})
+        .catch((error) => {
+            localStorage.removeItem("token");
+            router.push({
+                name: "login",
+            });
+        });
+};
 
 export default router;
