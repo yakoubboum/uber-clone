@@ -3,6 +3,7 @@ import ExampleComponent from "./components/ExampleComponent.vue";
 import LoginComponent from "./pages/auth/Login.vue";
 import RegisterComponent from "./pages/auth/Signup.vue";
 import LandingPage from "./pages/landing.vue";
+import LocationPage from "./pages/location.vue";
 
 const routes = [
     {
@@ -24,6 +25,11 @@ const routes = [
         path: "/Landing",
         name: "landing",
         component: LandingPage,
+    },
+    {
+        path: "/location",
+        name: "location",
+        component: LocationPage,
     },
     // Add more routes here
 ];

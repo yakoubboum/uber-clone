@@ -12,4 +12,8 @@
         <router-view></router-view>
     </div>
 </body>
+
+<link rel="stylesheet" href="//unpkg.com/leaflet/dist/leaflet.css" />
+<script src="//unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="//unpkg.com/vue2-leaflet"></script>
 </html>

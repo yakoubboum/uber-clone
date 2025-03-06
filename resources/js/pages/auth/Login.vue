@@ -73,12 +73,12 @@
 </style>
 
 <script setup>
-import { ref,onMounted } from "vue";
+import { ref, onMounted } from "vue";
 import { vMaska } from "maska/vue";
 import axios from "axios";
-import { useRouter } from 'vue-router';
+import { useRouter } from "vue-router";
 
-const router = useRouter()
+const router = useRouter();
 
 const name = ref("");
 const phone = ref("");
@@ -86,12 +86,12 @@ const login_code = ref("");
 const waitingOnVerification = ref(false);
 
 onMounted(() => {
-    if (localStorage.getItem('token')) {
+    if (localStorage.getItem("token")) {
         router.push({
-            name: 'landing'
-        })
+            name: "landing",
+        });
     }
-})
+});
 
 function handleSubmit() {
     axios
@@ -125,8 +125,8 @@ function handleVerification() {
             console.log(response.data); // auth token
             localStorage.setItem("token", response.data);
             router.push({
-                name: 'landing'
-            })
+                name: "landing",
+            });
         })
         .catch((error) => {
             console.error(error);
