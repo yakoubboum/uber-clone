@@ -21,9 +21,11 @@
         "vue": "^3.5.13"
     },
     "dependencies": {
+        "@trevoreyre/autocomplete-vue": "^3.0.3",
         "@vue-leaflet/vue-leaflet": "^0.10.1",
         "@vueuse/core": "^12.8.2",
         "leaflet": "^1.9.4",
+        "leaflet-routing-machine": "^3.2.12",
         "libphonenumber-js": "^1.12.4",
         "maska": "^3.1.0",
         "pinia": "^3.0.1",
