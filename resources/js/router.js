@@ -4,6 +4,9 @@ import LoginComponent from "./pages/auth/Login.vue";
 import RegisterComponent from "./pages/auth/Signup.vue";
 import LandingPage from "./pages/landing.vue";
 import LocationPage from "./pages/location.vue";
+import TripPage from "./pages/Trip.vue";
+import StandbyPage from "./pages/Standby.vue";
+import DriverPage from "./pages/Driver.vue";
 
 const routes = [
     {
@@ -30,6 +33,21 @@ const routes = [
         path: "/location",
         name: "location",
         component: LocationPage,
+    },
+    {
+        path: "/trip",
+        name: "trip",
+        component: TripPage,
+    },
+    {
+        path: "/standby",
+        name: "standby",
+        component: StandbyPage,
+    },
+    {
+        path: "/driver",
+        name: "driver",
+        component: DriverPage,
     },
     // Add more routes here
 ];

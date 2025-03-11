@@ -31,9 +31,21 @@ class TripController extends Controller
         return $trip;
     }
 
-    public function show(Request $request, Trip $trip)
+    public function show(Request $request)
     {
         // is the trip is associated with the authenticated user?
+        return $request->user() ;
+        $trip = Trip::exists();
+
+        if($trip->exists()) {
+            return $trip;
+        } else {
+            return response()->json([
+                "message" => "Trip not found"
+            ], 404);
+        }
+
+
         if ($trip->user->id === $request->user()->id) {
             return $trip;
         }

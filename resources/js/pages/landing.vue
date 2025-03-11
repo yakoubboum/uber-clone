@@ -18,7 +18,7 @@
                 Find a Ride
             </button>
             <button
-                @click="startDriving"
+                @click="handleStartDriving"
                 class="btn-secondary px-6 py-3 rounded-full bg-white text-blue-500 font-semibold shadow-lg transform transition-transform hover:scale-105 hover:bg-blue-100"
             >
                 Start Driving
@@ -29,14 +29,29 @@
 
 <script setup>
 import { useRouter } from "vue-router";
-
+import http from '@/helpers/http';
 const router = useRouter();
 
 function findRide() {
     router.push("/location");
 }
 
-function startDriving() {
-    router.push("/start-driving");
-}
+const handleStartDriving = () => {
+    http()
+        .get("/api/driver")
+        .then((response) => {
+            if (response.data.driver) {
+                router.push({
+                    name: "standby",
+                });
+            } else {
+                router.push({
+                    name: "driver",
+                });
+            }
+        })
+        .catch((error) => {
+            console.error(error);
+        });
+};
 </script>

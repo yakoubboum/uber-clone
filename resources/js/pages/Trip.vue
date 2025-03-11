@@ -103,15 +103,13 @@ import { reactive } from "vue";
 import { useGeolocation } from "@vueuse/core";
 import LRoutingMachine from "../components/LRoutingMachine.vue";
 import axios from "axios";
-import { useRouter } from "vue-router";
-
+import { useRouter } from 'vue-router';
 import L from "leaflet";
-
-import http from '@/helpers/http';
 
 import "leaflet-routing-machine"; // Import the library
 import "leaflet-routing-machine/dist/leaflet-routing-machine.css"; //Import the style
 import "leaflet/dist/leaflet.css";
+
 
 const router = useRouter();
 const map = ref(null);
@@ -126,14 +124,6 @@ const destinationSuggestions = ref([]);
 const locationMarker = ref(null);
 const destinationMarker = ref(null);
 
-const tripExists = ref(false);
-
-
-
-
-
-
-
 const debugRoutingEvent = (event) => {
     console.log(`${event.type} event: `, event);
 };
@@ -146,91 +136,9 @@ const geolocation = useGeolocation();
 
 console.log(geolocation.coords.value.latitude);
 
-async function checkForTrip() {
-
-    http()
-        .get("/api/trip")
-        .then((response) => {
-            console.log(response.data);
-        })
-        .catch((error) => {
-            console.log(error);
-        });
-
-}
-
-onMounted(() => {
-    checkForTrip();
-});
 
 
-const fetchLocationSuggestions = async (type) => {
-    const query = type === "location" ? location.value : destination.value;
-    if (query.length < 3) {
-        if (type === "location") locationSuggestions.value = [];
-        else destinationSuggestions.value = [];
-        return;
-    }
 
-    const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${query}`
-    );
-    const data = await response.json();
-
-    if (type === "location") locationSuggestions.value = data;
-    else destinationSuggestions.value = data;
-};
-
-const selectLocation = (suggestion, type) => {
-    if (type === "location") {
-        location.value = suggestion.display_name;
-
-        location_coordinates.value = [
-            parseFloat(suggestion.lat),
-            parseFloat(suggestion.lon),
-        ];
-        locationSuggestions.value = [];
-        locationMarker.value = [
-            parseFloat(suggestion.lat),
-            parseFloat(suggestion.lon),
-        ];
-
-        center.value = [parseFloat(suggestion.lat), parseFloat(suggestion.lon)];
-    } else {
-        destination.value = suggestion.display_name;
-        destinationSuggestions.value = [];
-        destinationMarker.value = [
-            parseFloat(suggestion.lat),
-            parseFloat(suggestion.lon),
-        ];
-
-        destination_coordinates.value = [
-            parseFloat(suggestion.lat),
-            parseFloat(suggestion.lon),
-        ];
-    }
-};
-
-const submittrip = () => {
-    http()
-        .post("/api/trip", {
-            origin: {
-                lat: destination_coordinates.value[0],
-                lng: destination_coordinates.value[1],
-            },
-            destination: {
-                lat: location_coordinates.value[0],
-                lng: location_coordinates.value[1],
-            },
-            destination_name: destination.value,
-        })
-        .then((response) => {
-            console.log(response.data);
-        })
-        .catch((error) => {
-            console.log(error);
-        });
-};
 </script>
 
 <style>
