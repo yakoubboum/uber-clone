@@ -1,5 +1,7 @@
 // filepath: /c:/Users/user/Desktop/uber-clone/resources/js/app.js
 import './bootstrap';
+
+
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 

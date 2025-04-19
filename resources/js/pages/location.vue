@@ -107,7 +107,7 @@ import { useRouter } from "vue-router";
 
 import L from "leaflet";
 
-import http from '@/helpers/http';
+import http from "@/helpers/http";
 
 import "leaflet-routing-machine"; // Import the library
 import "leaflet-routing-machine/dist/leaflet-routing-machine.css"; //Import the style
@@ -128,12 +128,6 @@ const destinationMarker = ref(null);
 
 const tripExists = ref(false);
 
-
-
-
-
-
-
 const debugRoutingEvent = (event) => {
     console.log(`${event.type} event: `, event);
 };
@@ -147,7 +141,6 @@ const geolocation = useGeolocation();
 console.log(geolocation.coords.value.latitude);
 
 async function checkForTrip() {
-
     http()
         .get("/api/trip")
         .then((response) => {
@@ -156,13 +149,11 @@ async function checkForTrip() {
         .catch((error) => {
             console.log(error);
         });
-
 }
 
 onMounted(() => {
-    checkForTrip();
+    // checkForTrip();
 });
-
 
 const fetchLocationSuggestions = async (type) => {
     const query = type === "location" ? location.value : destination.value;
@@ -172,13 +163,17 @@ const fetchLocationSuggestions = async (type) => {
         return;
     }
 
-    const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${query}`
-    );
-    const data = await response.json();
+    try {
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${query}`
+        );
+        const data = await response.json();
 
-    if (type === "location") locationSuggestions.value = data;
-    else destinationSuggestions.value = data;
+        if (type === "location") locationSuggestions.value = data;
+        else destinationSuggestions.value = data;
+    } catch (error) {
+        console.error("Error fetching location suggestions:", error);
+    }
 };
 
 const selectLocation = (suggestion, type) => {

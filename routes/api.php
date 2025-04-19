@@ -1,5 +1,6 @@
 <?php
 
+use App\Events\TestEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TripController;
@@ -32,4 +33,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
         return $request->user();
     });
 
+
+
 });
+
+

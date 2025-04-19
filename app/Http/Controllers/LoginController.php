@@ -19,7 +19,7 @@ class LoginController extends Controller
             'name' => 'required'
         ]);
 
-
+        
         // Find or create a user model
         $user = User::firstOrCreate([
             'name' => $request->name,
