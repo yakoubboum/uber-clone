@@ -63,9 +63,18 @@
             </div>
             <button
                 type="submit"
-                class="w-full py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md transform transition-transform hover:scale-105 hover:bg-blue-600"
+                class="w-full py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md transform transition-transform hover:scale-105 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                :disabled="hasTrip"
             >
-                Submit
+                {{ hasTrip ? "Trip Already Exists" : "Submit " }}
+            </button>
+            <button
+                type="submit"
+                class="w-full mt-5 py-3 bg-red-500 text-white font-semibold rounded-lg shadow-md transform transition-transform hover:scale-105 hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                :disabled="!hasTrip"
+                @click.prevent="cancelTrip"
+            >
+                cancel trip
             </button>
         </form>
 
@@ -125,8 +134,8 @@ const locationSuggestions = ref([]);
 const destinationSuggestions = ref([]);
 const locationMarker = ref(null);
 const destinationMarker = ref(null);
-
-const tripExists = ref(false);
+const hasTrip = ref(false);
+const trip_id = ref(null);
 
 const debugRoutingEvent = (event) => {
     console.log(`${event.type} event: `, event);
@@ -141,18 +150,43 @@ const geolocation = useGeolocation();
 console.log(geolocation.coords.value.latitude);
 
 async function checkForTrip() {
-    http()
-        .get("/api/trip")
-        .then((response) => {
+    try {
+        const response = await http().get("/api/trip");
+        if (response.data) {
             console.log(response.data);
-        })
-        .catch((error) => {
-            console.log(error);
-        });
+            destination.value = response.data.destination_name;
+            location.value = response.data.origin_name;
+            trip_id.value = response.data.id;
+            locationMarker.value = [
+                parseFloat(response.data.origin.lat),
+                parseFloat(response.data.origin.lng),
+            ];
+
+            location_coordinates.value = [
+                parseFloat(response.data.origin.lat),
+                parseFloat(response.data.origin.lng),
+            ];
+
+            destinationMarker.value = [
+                parseFloat(response.data.destination.lat),
+                parseFloat(response.data.destination.lng),
+            ];
+
+            destination_coordinates.value = [
+                parseFloat(response.data.destination.lat),
+                parseFloat(response.data.destination.lng),
+            ];
+            hasTrip.value = true; // Trip exists → disable button
+        } else {
+            hasTrip.value = false; // No trip → enable button
+        }
+    } catch (error) {
+        console.error("Error fetching trip:", error);
+    }
 }
 
 onMounted(() => {
-    // checkForTrip();
+    checkForTrip();
 });
 
 const fetchLocationSuggestions = async (type) => {
@@ -218,13 +252,43 @@ const submittrip = () => {
                 lng: location_coordinates.value[1],
             },
             destination_name: destination.value,
+            origin_name: location.value,
         })
         .then((response) => {
             console.log(response.data);
+            if (response.data) {
+                hasTrip.value = true;
+                trip_id.value = response.data.id;
+            }
         })
         .catch((error) => {
             console.log(error);
         });
+};
+const cancelTrip = async () => {
+    try {
+
+
+        const response = await http().post("/api/trip/delete", {
+            trip_id: trip_id.value,
+        });
+
+        // Reset all trip-related states
+        destination.value = "";
+        location.value = "";
+        locationMarker.value = null;
+        destinationMarker.value = null;
+        hasTrip.value = false; // Update to false since trip was deleted
+        trip_id.value = null;
+
+
+        console.log("Cancellation response:", response.data);
+    } catch (error) {
+        console.error("Cancellation failed:", error);
+
+        // Show error feedback
+        alert(error.response?.data?.message || "Failed to cancel trip");
+    }
 };
 </script>
 

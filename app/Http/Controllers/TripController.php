@@ -16,6 +16,7 @@ class TripController extends Controller
     {
         $request->validate([
             'origin' => 'required',
+            'origin_name' => 'required',
             'destination' => 'required',
             'destination_name' => 'required'
         ]);
@@ -23,7 +24,8 @@ class TripController extends Controller
         $trip = $request->user()->trips()->create($request->only([
             'origin',
             'destination',
-            'destination_name'
+            'destination_name',
+            'origin_name'
         ]));
 
         TripCreated::dispatch($trip, $request->user());
@@ -31,13 +33,26 @@ class TripController extends Controller
         return $trip;
     }
 
+    public function getalltrips(){
+
+        $trips = Trip::all(); // Or use pagination if you expect many trips
+
+        return response()->json([
+            'success' => true,
+            'trips' => $trips,
+            'message' => 'Trips retrieved successfully'
+        ], 200);
+    }
+
     public function show(Request $request)
     {
         // is the trip is associated with the authenticated user?
-        return $request->user() ;
-        $trip = Trip::exists();
+        $user = $request->user(); // Get the authenticated user
 
-        if($trip->exists()) {
+        // Assuming you want to find a trip associated with this user
+        $trip = Trip::where('user_id', $user->id)->first();
+
+        if ($trip) {
             return $trip;
         } else {
             return response()->json([
@@ -46,9 +61,7 @@ class TripController extends Controller
         }
 
 
-        if ($trip->user->id === $request->user()->id) {
-            return $trip;
-        }
+
 
         if ($trip->driver && $request->user()->driver) {
             if ($trip->driver->id === $request->user()->driver->id) {
@@ -122,5 +135,26 @@ class TripController extends Controller
         TripLocationUpdated::dispatch($trip, $trip->user);
 
         return $trip;
+    }
+
+    public function delete(Request $request)
+    {
+        $user = $request->user();
+
+        $trip = Trip::where('user_id', $user->id)
+            ->where('id', $request->trip_id)
+            ->first();
+
+        if (!$trip) {
+            return response()->json([
+                "message" => "Trip not found"
+            ], 404);
+        }
+
+        $trip->delete();
+
+        return response()->json([
+            "message" => "Trip deleted successfully"
+        ], 200); // Use 200 for successful deletion
     }
 }

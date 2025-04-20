@@ -6,7 +6,7 @@
         <div
             class="bg-white p-6 rounded-lg shadow-lg text-blue-500 w-full max-w-4xl"
         >
-            <!-- <ul v-if="trips.length > 0">
+            <ul v-if="trips">
                 <li
                     v-for="trip in trips"
                     :key="trip.id"
@@ -14,22 +14,11 @@
                 >
                     <div class="flex justify-between items-center">
                         <div>
-                            <h2 class="text-xl font-semibold">
-                                {{ trip.name }}
-                            </h2>
-                            <p>From: {{ trip.location }}</p>
-                            <p>To: {{ trip.destination }}</p>
-                            <p>
-                                Car: {{ trip.make }} {{ trip.model }} ({{
-                                    trip.year
-                                }})
-                            </p>
-                            <p>Color: {{ trip.color }}</p>
-                            <p>License Plate: {{ trip.license_plate }}</p>
+                            <p>From: {{ trip.origin_name }}</p>
+                            <p>To: {{ trip.destination_name }}</p>
                         </div>
                         <div>
                             <button
-                                @click="startTrip(trip.id)"
                                 class="py-2 px-4 bg-green-500 text-white font-semibold rounded-lg shadow-md transform transition-transform hover:scale-105 hover:bg-green-600"
                             >
                                 Start Trip
@@ -37,10 +26,10 @@
                         </div>
                     </div>
                 </li>
-            </ul> -->
-            <!-- <div v-else class="flex justify-center items-center">
+            </ul>
+            <div v-else class="flex justify-center items-center">
                 <Loader />
-            </div> -->
+            </div>
         </div>
     </div>
 </template>
@@ -48,14 +37,28 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import axios from "axios";
+import http from "@/helpers/http";
 import Loader from "../components/Loader.vue";
 
 const trips = ref([]);
 
 onMounted(() => {
-    Echo.channel("trips")
-        .listen("TripCreated", (e) => {
-            console.log("🎯 Trip received!", e);
+    Echo.channel("trips").listen("TripCreated", (e) => {
+        console.log("🎯 Trip received!", e);
+
+        trips.value.unshift(e.trip);
+    });
+
+    http()
+        .get("/api/trips")
+        .then((response) => {
+            if (response.data.success) {
+                console.log(response.data.trips);
+                trips.value = response.data.trips;
+            }
+        })
+        .catch((error) => {
+            console.log(error);
         });
 });
 </script>
