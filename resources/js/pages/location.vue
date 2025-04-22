@@ -136,6 +136,7 @@ const locationMarker = ref(null);
 const destinationMarker = ref(null);
 const hasTrip = ref(false);
 const trip_id = ref(null);
+const user_id = ref(null);
 
 const debugRoutingEvent = (event) => {
     console.log(`${event.type} event: `, event);
@@ -145,10 +146,6 @@ const url = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 const attribution =
     '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors';
 
-const geolocation = useGeolocation();
-
-console.log(geolocation.coords.value.latitude);
-
 async function checkForTrip() {
     try {
         const response = await http().get("/api/trip");
@@ -157,6 +154,7 @@ async function checkForTrip() {
             destination.value = response.data.destination_name;
             location.value = response.data.origin_name;
             trip_id.value = response.data.id;
+            user_id.value = response.data.user_id;
             locationMarker.value = [
                 parseFloat(response.data.origin.lat),
                 parseFloat(response.data.origin.lng),
@@ -183,10 +181,38 @@ async function checkForTrip() {
     } catch (error) {
         console.error("Error fetching trip:", error);
     }
+
+    Echo.channel(`passenger_${user_id.value}`).listen("TripAccepted", (e) => {
+        console.log("🎯 Trip received!", e);
+
+
+    });
 }
 
 onMounted(() => {
     checkForTrip();
+
+/*    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function (position) {
+                console.log("Latitude: " + position.coords.latitude);
+            },
+            function (error) {
+                console.error("Error getting location:", error);
+            }
+        );
+    } else {
+        console.log("Geolocation is not supported by this browser.");
+    } */
+
+
+
+
+
+
+
+
+
 });
 
 const fetchLocationSuggestions = async (type) => {
@@ -259,6 +285,7 @@ const submittrip = () => {
             if (response.data) {
                 hasTrip.value = true;
                 trip_id.value = response.data.id;
+                user_id.value=response.data.user_id;
             }
         })
         .catch((error) => {
@@ -267,8 +294,6 @@ const submittrip = () => {
 };
 const cancelTrip = async () => {
     try {
-
-
         const response = await http().post("/api/trip/delete", {
             trip_id: trip_id.value,
         });
@@ -280,7 +305,6 @@ const cancelTrip = async () => {
         destinationMarker.value = null;
         hasTrip.value = false; // Update to false since trip was deleted
         trip_id.value = null;
-
 
         console.log("Cancellation response:", response.data);
     } catch (error) {

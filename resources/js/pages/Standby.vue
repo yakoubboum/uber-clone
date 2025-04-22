@@ -14,11 +14,14 @@
                 >
                     <div class="flex justify-between items-center">
                         <div>
+                            <p>user: {{ trip.user.name }}</p>
+                            <p>phone: {{ trip.user.phone }}</p>
                             <p>From: {{ trip.origin_name }}</p>
                             <p>To: {{ trip.destination_name }}</p>
                         </div>
                         <div>
                             <button
+                                @click="starttrip(trip.id)"
                                 class="py-2 px-4 bg-green-500 text-white font-semibold rounded-lg shadow-md transform transition-transform hover:scale-105 hover:bg-green-600"
                             >
                                 Start Trip
@@ -42,6 +45,8 @@ import Loader from "../components/Loader.vue";
 
 const trips = ref([]);
 
+const geolocation = navigator.geolocation;
+
 onMounted(() => {
     Echo.channel("trips").listen("TripCreated", (e) => {
         console.log("🎯 Trip received!", e);
@@ -60,7 +65,31 @@ onMounted(() => {
         .catch((error) => {
             console.log(error);
         });
+
+    // Get coordinates
 });
+
+const starttrip = (tripId) => {
+    geolocation.getCurrentPosition(async (position) => {
+        const { latitude, longitude } = position.coords;
+        console.log(latitude);
+
+        http()
+            .post(`/api/trip/${tripId}/accept`, {
+                driver_location: { latitude, longitude },
+            })
+            .then((response) => {
+                // router.push({
+                //     name: "driving",
+                // });
+
+                console.log(response);
+            })
+            .catch((error) => {
+                console.error(error);
+            });
+    });
+};
 </script>
 
 <style scoped>

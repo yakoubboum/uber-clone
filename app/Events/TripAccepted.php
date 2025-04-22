@@ -22,7 +22,7 @@ class TripAccepted implements ShouldBroadcast
     /**
      * Create a new event instance.
      */
-    public function __construct(Trip $trip, User $user)
+    public function __construct(Trip $trip,int $user)
     {
         $this->trip = $trip;
         $this->user = $user;
@@ -36,7 +36,7 @@ class TripAccepted implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new Channel('passenger_' . $this->user->id)
+            new Channel('passenger_'.$this->user)
         ];
     }
 }

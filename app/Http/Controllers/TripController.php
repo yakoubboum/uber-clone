@@ -28,6 +28,8 @@ class TripController extends Controller
             'origin_name'
         ]));
 
+        $trip->load('user');
+
         TripCreated::dispatch($trip, $request->user());
 
         return $trip;
@@ -35,7 +37,8 @@ class TripController extends Controller
 
     public function getalltrips(){
 
-        $trips = Trip::all(); // Or use pagination if you expect many trips
+        $trips = Trip::with('user')->get();
+        // $trips = Trip::all();
 
         return response()->json([
             'success' => true,
@@ -74,6 +77,8 @@ class TripController extends Controller
 
     public function accept(Request $request, Trip $trip)
     {
+
+
         // a driver accepts a trip
         $request->validate([
             'driver_location' => 'required'
@@ -86,7 +91,9 @@ class TripController extends Controller
 
         $trip->load('driver.user');
 
-        TripAccepted::dispatch($trip, $trip->user);
+
+
+        TripAccepted::dispatch($trip, 40);
 
         return $trip;
     }

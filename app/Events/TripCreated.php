@@ -28,23 +28,17 @@ class TripCreated implements ShouldBroadcast
         $this->user = $user;
     }
 
-    public function broadcastWith()
-    {
-        return [
-            'trip' => [
-                'id' => $this->trip->id,
-                'start_location' => $this->trip->start_location,
-                'end_location' => $this->trip->end_location,
-                // Add other relevant trip data
-            ],
-            'user' => [
-                'id' => $this->user->id,
-                'name' => $this->user->name,
-                'email' => $this->user->email,
-                // Add other relevant user data
-            ],
-        ];
-    }
+    // public function broadcastWith()
+    // {
+    //     return [
+    //         'trip' => $this->trip->fresh()->toArray(), // Use fresh() to ensure latest data
+    //         'user' => [
+    //             'name' => $this->user->name,
+    //             'id' => $this->user->id,
+    //             // Add other user fields if needed
+    //         ],
+    //     ];
+    // }
 
     /**
      * Get the channels the event should broadcast on.
