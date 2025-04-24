@@ -66,7 +66,7 @@
                 class="w-full py-3 bg-blue-500 text-white font-semibold rounded-lg shadow-md transform transition-transform hover:scale-105 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 :disabled="hasTrip"
             >
-                {{ hasTrip ? "Trip Already Exists" : "Submit " }}
+                {{ hasTrip ? title : "submit" }}
             </button>
             <button
                 type="submit"
@@ -76,6 +76,17 @@
             >
                 cancel trip
             </button>
+
+            <p
+                class="mt-4 p-3 rounded-lg transition-all duration-300 ease-in-out"
+                :class="{
+                    'bg-blue-100 text-blue-800 border border-blue-300': hasTrip,
+                    'bg-gray-100 text-gray-500 border border-gray-200':
+                        !hasTrip,
+                }"
+            >
+                {{ hasTrip ? message : "" }}
+            </p>
         </form>
 
         <l-map
@@ -106,7 +117,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, onUnmounted, watch } from "vue";
 import { LMap, LTileLayer, LMarker } from "@vue-leaflet/vue-leaflet";
 import { reactive } from "vue";
 import { useGeolocation } from "@vueuse/core";
@@ -138,6 +149,11 @@ const hasTrip = ref(false);
 const trip_id = ref(null);
 const user_id = ref(null);
 
+const title = ref("Waiting on a driver...");
+const message = ref(
+    "When a driver accepts the trip, their info will appear here."
+);
+
 const debugRoutingEvent = (event) => {
     console.log(`${event.type} event: `, event);
 };
@@ -146,8 +162,13 @@ const url = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 const attribution =
     '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors';
 
+let echoInstance = null;
+
 async function checkForTrip() {
     try {
+        if (echoInstance) {
+            Echo.leave(`passenger_${user_id.value}`);
+        }
         const response = await http().get("/api/trip");
         if (response.data) {
             console.log(response.data);
@@ -175,44 +196,43 @@ async function checkForTrip() {
                 parseFloat(response.data.destination.lng),
             ];
             hasTrip.value = true; // Trip exists → disable button
+
+            if (response.data.driver_id) {
+                title.value = "A driver is on the way! !";
+                message.value = `${response.data.driver.user.name} is coming in a ${response.data.driver.year} ${response.data.driver.color} ${response.data.driver.make} ${response.data.driver.model} with a license plate #${response.data.driver.license_plate}`;
+            }
         } else {
             hasTrip.value = false; // No trip → enable button
         }
+        echoInstance = Echo.channel(`passenger_${user_id.value}`)
+            .listen("TripAccepted", (e) => {
+                console.log("🎯 Trip received!", e);
+
+                title.value = "A driver is on the way!";
+                message.value = `${e.trip.driver.user.name} is coming in a ${e.trip.driver.year} ${e.trip.driver.color} ${e.trip.driver.make} ${e.trip.driver.model} with a license plate #${e.trip.driver.license_plate}`;
+            })
+            .listen("TripStarted", (e) => {
+                console.log("🎯 Trip started!", e);
+                title.value = "Trip started";
+            })
+            .listen("TripEnded", (e) => {
+                console.log("🎯 Trip ended!", e);
+                window.location.reload();
+            });
     } catch (error) {
         console.error("Error fetching trip:", error);
     }
-
-    Echo.channel(`passenger_${user_id.value}`).listen("TripAccepted", (e) => {
-        console.log("🎯 Trip received!", e);
-
-
-    });
 }
 
 onMounted(() => {
     checkForTrip();
+});
 
-/*    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            function (position) {
-                console.log("Latitude: " + position.coords.latitude);
-            },
-            function (error) {
-                console.error("Error getting location:", error);
-            }
-        );
-    } else {
-        console.log("Geolocation is not supported by this browser.");
-    } */
-
-
-
-
-
-
-
-
-
+onUnmounted(() => {
+    // Clean up Echo listeners when component unmounts
+    if (echoInstance) {
+        Echo.leave(`passenger_${user_id.value}`);
+    }
 });
 
 const fetchLocationSuggestions = async (type) => {
@@ -270,12 +290,12 @@ const submittrip = () => {
     http()
         .post("/api/trip", {
             origin: {
-                lat: destination_coordinates.value[0],
-                lng: destination_coordinates.value[1],
-            },
-            destination: {
                 lat: location_coordinates.value[0],
                 lng: location_coordinates.value[1],
+            },
+            destination: {
+                lat: destination_coordinates.value[0],
+                lng: destination_coordinates.value[1],
             },
             destination_name: destination.value,
             origin_name: location.value,
@@ -285,12 +305,32 @@ const submittrip = () => {
             if (response.data) {
                 hasTrip.value = true;
                 trip_id.value = response.data.id;
-                user_id.value=response.data.user_id;
+                user_id.value = response.data.user_id;
             }
+
+            Echo.leave(`passenger_${user_id.value}`);
+
+            Echo.channel(`passenger_${user_id.value}`)
+            .listen("TripAccepted", (e) => {
+                console.log("🎯 Trip received!", e);
+
+                title.value = "A driver is on the way!";
+                message.value = `${e.trip.driver.user.name} is coming in a ${e.trip.driver.year} ${e.trip.driver.color} ${e.trip.driver.make} ${e.trip.driver.model} with a license plate #${e.trip.driver.license_plate}`;
+            })
+            .listen("TripStarted", (e) => {
+                console.log("🎯 Trip started!", e);
+                title.value = "Trip started";
+            })
+            .listen("TripEnded", (e) => {
+                console.log("🎯 Trip ended!", e);
+                window.location.reload();
+            });
         })
         .catch((error) => {
             console.log(error);
         });
+
+
 };
 const cancelTrip = async () => {
     try {

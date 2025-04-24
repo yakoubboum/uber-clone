@@ -21,7 +21,7 @@
                         </div>
                         <div>
                             <button
-                                @click="starttrip(trip.id)"
+                                @click="startTrip(trip.id)"
                                 class="py-2 px-4 bg-green-500 text-white font-semibold rounded-lg shadow-md transform transition-transform hover:scale-105 hover:bg-green-600"
                             >
                                 Start Trip
@@ -43,11 +43,19 @@ import axios from "axios";
 import http from "@/helpers/http";
 import Loader from "../components/Loader.vue";
 
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+
 const trips = ref([]);
 
 const geolocation = navigator.geolocation;
 
 onMounted(() => {
+    const response = http().get("/api/trip");
+    if (response.data) {
+        router.push({ name: "driving" });
+    }
     Echo.channel("trips").listen("TripCreated", (e) => {
         console.log("🎯 Trip received!", e);
 
@@ -69,26 +77,30 @@ onMounted(() => {
     // Get coordinates
 });
 
-const starttrip = (tripId) => {
-    geolocation.getCurrentPosition(async (position) => {
+const startTrip = async (tripId) => {
+    try {
+        // 1. Get geolocation (wrap in a Promise)
+        const position = await new Promise((resolve, reject) => {
+            geolocation.getCurrentPosition(resolve, reject);
+        });
+
         const { latitude, longitude } = position.coords;
-        console.log(latitude);
 
-        http()
-            .post(`/api/trip/${tripId}/accept`, {
-                driver_location: { latitude, longitude },
-            })
-            .then((response) => {
-                // router.push({
-                //     name: "driving",
-                // });
+        // 2. Make API request (await the response)
+        const response = await http().post(`/api/trip/${tripId}/accept`, {
+            driver_location: { latitude, longitude },
+        });
 
-                console.log(response);
-            })
-            .catch((error) => {
-                console.error(error);
-            });
-    });
+        console.log("Trip accepted!", response.data);
+
+        // 3. Only redirect AFTER the API call succeeds
+        if(response.data){
+            router.push({ name: "driving" });
+        }
+
+    } catch (error) {
+        console.error("Error in startTrip:", error);
+    }
 };
 </script>
 

@@ -1,9 +1,11 @@
 <?php
 
+use App\Models\Trip;
+use App\Models\User;
 use App\Events\TestEvent;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
 
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Broadcast;
 
 
@@ -20,12 +22,13 @@ Route::get('/app/{any}', function () {
 
 
 
-Route::get('/testevent', function () {
+Route::get('/test', function () {
 
-    Broadcast::event(new TestEvent('Hello from Reverb!'));
+    $user=User::find(40);
 
+    // $trip->load('driver.user');
 
-    return response()->json(['status' => 'event broadcasted']);
+    return $user->driver;
 
 
 });

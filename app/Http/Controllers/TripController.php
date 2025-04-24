@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\TripAccepted;
-use App\Events\TripCreated;
-use App\Events\TripEnded;
-use App\Events\TripLocationUpdated;
-use App\Events\TripStarted;
 use App\Models\Trip;
+use App\Models\Driver;
+use App\Events\TripEnded;
+use App\Events\TripCreated;
+use App\Events\TripStarted;
+use App\Events\TripAccepted;
 use Illuminate\Http\Request;
+use App\Events\TripLocationUpdated;
 
 class TripController extends Controller
 {
@@ -35,9 +36,15 @@ class TripController extends Controller
         return $trip;
     }
 
-    public function getalltrips(){
-
-        $trips = Trip::with('user')->get();
+    public function getalltrips(Request $request)
+    {
+        $trip=Trip::where('is_complete',false)->where('driver_id', $request->user()->driver->id)->first();
+        if($trip){
+            return response()->json([
+                "message" => "Trip not found"
+            ], 404);
+        }
+        $trips = Trip::where('is_complete',false)->where('is_started',false)->with('user')->get();
         // $trips = Trip::all();
 
         return response()->json([
@@ -53,26 +60,23 @@ class TripController extends Controller
         $user = $request->user(); // Get the authenticated user
 
         // Assuming you want to find a trip associated with this user
-        $trip = Trip::where('user_id', $user->id)->first();
+        $trip = Trip::where('user_id', $user->id)->where('is_complete',false)->first();
 
         if ($trip) {
+            $trip->load("driver.user");
             return $trip;
         } else {
+
+            $trip=Trip::where('is_complete',false)->where('driver_id', $request->user()->driver->id)->first();
+            if($trip){
+
+                return $trip;
+            }
             return response()->json([
                 "message" => "Trip not found"
             ], 404);
         }
 
-
-
-
-        if ($trip->driver && $request->user()->driver) {
-            if ($trip->driver->id === $request->user()->driver->id) {
-                return $trip;
-            }
-        }
-
-        return response()->json(['message' => 'Cannot find this trip.'], 404);
     }
 
     public function accept(Request $request, Trip $trip)
@@ -89,11 +93,16 @@ class TripController extends Controller
             'driver_location' => $request->driver_location,
         ]);
 
-        $trip->load('driver.user');
+        // $trip->load('driver.user');
+
+        $driver = Driver::where('user_id',$request->user()->id)->first();
+        $driver->load('user');
+        $trip->driver()->associate($driver);
+        $trip->save();
 
 
 
-        TripAccepted::dispatch($trip, 40);
+        TripAccepted::dispatch($trip, $trip->user);
 
         return $trip;
     }

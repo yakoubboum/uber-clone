@@ -7,6 +7,7 @@ import LocationPage from "./pages/location.vue";
 import TripPage from "./pages/Trip.vue";
 import StandbyPage from "./pages/Standby.vue";
 import DriverPage from "./pages/Driver.vue";
+import DrivingPage from "./pages/Driving.vue";
 
 const routes = [
     {
@@ -44,10 +45,17 @@ const routes = [
         name: "standby",
         component: StandbyPage,
     },
+
     {
         path: "/driver",
         name: "driver",
         component: DriverPage,
+    },
+
+    {
+        path: "/driving",
+        name: "driving",
+        component: DrivingPage,
     },
     // Add more routes here
 ];
@@ -57,34 +65,52 @@ const router = createRouter({
     routes,
 });
 
-router.beforeEach((to, from) => {
+router.beforeEach(async (to, from, next) => {
+    const token = localStorage.getItem("token");
+
+    // If going to login page
     if (to.name === "login") {
-        return true;
+        if (token) {
+            // Check if token is valid
+            const isAuthenticated = await checkTokenAuthenticity();
+            if (isAuthenticated) {
+                // If authenticated, redirect away from login page
+                return next(from.name);
+            }
+        }
+        // Allow access to login page if no token or invalid token
+        return next();
     }
 
-    if (!localStorage.getItem("token")) {
-        return {
-            name: "login",
-        };
+    // For all other routes
+    if (!token) {
+        return next({ name: "login" });
     }
 
-    checkTokenAuthenticity();
+    // Verify token validity for protected routes
+    try {
+        const isAuthenticated = await checkTokenAuthenticity();
+        if (!isAuthenticated) {
+            return next({ name: "login" });
+        }
+        next();
+    } catch (error) {
+        return next({ name: "login" });
+    }
 });
 
-const checkTokenAuthenticity = () => {
-    axios
-        .get("http://127.0.0.1:8000/api/user", {
+const checkTokenAuthenticity = async () => {
+    try {
+        const response = await axios.get("http://127.0.0.1:8000/api/user", {
             headers: {
                 Authorization: `Bearer ${localStorage.getItem("token")}`,
             },
-        })
-        .then((response) => {})
-        .catch((error) => {
-            localStorage.removeItem("token");
-            router.push({
-                name: "login",
-            });
         });
+        return true;
+    } catch (error) {
+        localStorage.removeItem("token");
+        return false;
+    }
 };
 
 export default router;
